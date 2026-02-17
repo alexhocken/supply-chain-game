@@ -10,6 +10,10 @@ const ORDER_FEE = 10;
 // --- Warehouse / external storage ---
 const WAREHOUSE_CAPACITY = 100;
 const EXTERNAL_STORAGE_COST = 5; // per unit per turn
+// --- Game limits / penalties ---
+const MAX_TURNS = 20;
+const GOAL_CASH = 1000;
+const MISSED_ORDER_PENALTY = 2; // per missed unit when inventory is zero
 
 // --- Chart History ---
 let history = {
@@ -207,6 +211,7 @@ function endTurn() {
   }
 
   // 4. Calculate demand & sell
+  const preSaleInventory = inventory;
   const demand = getDemand(price);
   const unitsSold = Math.min(demand, inventory);
   const revenue = unitsSold * price;
@@ -226,10 +231,25 @@ function endTurn() {
     logMessage(`🏚️ External storage: ${excess} units × $${EXTERNAL_STORAGE_COST} = $${penalty.toFixed(2)}`);
   }
 
-  // 6. Update charts AFTER this turn's inventory & cash are settled
+  // 6. Missed-order penalty: applies when inventory was zero and demand > 0
+  if (preSaleInventory === 0 && unmetDemand > 0) {
+    const missedPenalty = unmetDemand * MISSED_ORDER_PENALTY;
+    cash -= missedPenalty;
+    logMessage(`❌ Missed orders penalty: ${unmetDemand} units × $${MISSED_ORDER_PENALTY} = $${missedPenalty.toFixed(2)}`);
+  }
+
+  // 7. Update charts AFTER this turn's inventory & cash are settled
   updateCharts(price, demand);
 
-  // 7. Bankruptcy check
+  // 8. Check goal achieved
+  if (cash >= GOAL_CASH) {
+    updateDisplay();
+    logMessage(`🏆 Goal reached! $${cash.toFixed(2)} — You win!`);
+    document.querySelector("button").disabled = true;
+    return;
+  }
+
+  // 9. Bankruptcy check
   if (cash <= 0 && inventory === 0) {
     updateDisplay();
     logMessage("💀 Out of cash and inventory. Game over!");
@@ -237,10 +257,33 @@ function endTurn() {
     return;
   }
 
-  // 8. Advance turn
+  // 10. End-of-game by turns
+  if (turn >= MAX_TURNS) {
+    updateDisplay();
+    if (cash >= GOAL_CASH) {
+      logMessage(`🏆 Goal reached! $${cash.toFixed(2)} — You win!`);
+    } else {
+      logMessage(`⏱️ Reached turn ${turn}. Game over. Final cash: $${cash.toFixed(2)}.`);
+    }
+    document.querySelector("button").disabled = true;
+    return;
+  }
+
+  // 11. Advance turn
   turn++;
   updateDisplay();
 }
 
 // --- Initialize ---
 updateDisplay();
+
+// --- Startup popup ---
+function showStartupPopup() {
+  const msg = `Goal: reach $${GOAL_CASH} in ${MAX_TURNS} turns. Good luck!`;
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    alert(msg);
+  } else {
+    window.addEventListener('DOMContentLoaded', () => alert(msg));
+  }
+}
+showStartupPopup();
