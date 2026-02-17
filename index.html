@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Supply Chain Game</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <h1>📦 Supply Chain Game</h1>
+
+    <div id="stats">
+      <div class="stat-box">💰 Cash: $<span id="cash">100</span></div>
+      <div class="stat-box">📦 Inventory: <span id="inventory">100</span> units</div>
+      <div class="stat-box">🔄 Turn: <span id="turn">1</span></div>
+    </div>
+
+    <div id="incoming-box">
+      🚚 Incoming shipment: <span id="incoming">None</span>
+    </div>
+
+    <!-- Main layout: controls + charts side by side -->
+    <div id="main-layout">
+
+      <div id="left-panel">
+        <div id="controls">
+          <label>Set your price per unit: $<input type="number" id="price" value="3" min="1" max="20"></label>
+          <br><br>
+          <label>Order how many units? <input type="number" id="order-qty" value="0" min="0"></label>
+          <span id="order-cost-preview"></span>
+          <br><br>
+          <button onclick="endTurn()">⏩ End Turn</button>
+        </div>
+
+        <div id="log-box">
+          <h3>Turn Log</h3>
+          <div id="log"></div>
+        </div>
+      </div>
+
+      <div id="right-panel">
+        <div class="chart-box">
+          <h3>📦 Inventory Over Time</h3>
+          <canvas id="inventoryChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>🏷️ Price & Demand Over Time</h3>
+          <canvas id="priceDemandChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Chart.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
