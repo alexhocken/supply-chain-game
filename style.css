@@ -107,6 +107,7 @@ button:hover { background: #c73652; }
   flex-direction: column;
   gap: 20px;
   width: 420px;
+  margin-left: 100px;
 }
 
 .chart-box {
@@ -120,4 +121,14 @@ button:hover { background: #c73652; }
   font-size: 15px;
   color: #e94560;
   text-align: center;
+}
+
+#cost-info {
+  background: #0f3460;
+  border-radius: 8px;
+  padding: 8px 20px;
+  margin: 10px auto;
+  width: fit-content;
+  font-size: 14px;
+  color: #aaa;
 }
