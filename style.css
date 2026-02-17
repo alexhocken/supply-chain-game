@@ -107,7 +107,7 @@ button:hover { background: #c73652; }
   flex-direction: column;
   gap: 20px;
   width: 420px;
-  margin-left: 150px;
+  margin-left: 300px;
 }
 
 .chart-box {
@@ -132,4 +132,5 @@ button:hover { background: #c73652; }
   font-size: 14px;
   color: #aaa;
 }
+
 
