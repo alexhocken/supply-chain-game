@@ -89,10 +89,11 @@ button:hover { background: #c73652; }
 #main-layout {
   display: flex;
   justify-content: center;
-  gap: 30px;
+  gap: 60px;
   align-items: flex-start;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-top: 10px;
+  padding: 0 40px;
 }
 
 #left-panel {
@@ -132,5 +133,6 @@ button:hover { background: #c73652; }
   font-size: 14px;
   color: #aaa;
 }
+
 
 
