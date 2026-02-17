@@ -4,12 +4,17 @@ let inventory = 100;
 let turn = 1;
 let pipeline = [0, 0];
 
+// --- Cost Constants ---
+const UNIT_COST = 2;
+const ORDER_FEE = 10;
+
 // --- Chart History ---
 let history = {
   turns: [],
   inventory: [],
   price: [],
-  demand: []
+  demand: [],
+  cash: []
 };
 
 // --- Setup Charts ---
@@ -95,6 +100,32 @@ const priceDemandChart = new Chart(document.getElementById("priceDemandChart"), 
     }
   }
 });
+const cashChart = new Chart(document.getElementById("cashChart"), {
+  type: "line",
+  data: {
+    labels: history.turns,
+    datasets: [{
+      label: "Cash ($)",
+      data: history.cash,
+      borderColor: "#a8ff78",
+      backgroundColor: "rgba(168,255,120,0.15)",
+      fill: true,
+      tension: 0.3,
+      pointRadius: 4,
+      pointBackgroundColor: "#a8ff78"
+    }]
+  },
+  options: {
+    animation: false,
+    scales: {
+      x: { ticks: { color: "#aaa" }, grid: { color: "#333" } },
+      y: { ticks: { color: "#aaa" }, grid: { color: "#333" }, beginAtZero: true }
+    },
+    plugins: {
+      legend: { labels: { color: "#eee" } }
+    }
+  }
+});
 
 // --- Update Charts ---
 function updateCharts(price, demand) {
@@ -102,9 +133,11 @@ function updateCharts(price, demand) {
   history.inventory.push(inventory);
   history.price.push(price);
   history.demand.push(demand);
+  history.cash.push(cash);
 
   inventoryChart.update();
   priceDemandChart.update();
+  cashChart.update();
 }
 
 // --- Update the display ---
@@ -119,7 +152,7 @@ function updateDisplay() {
 // --- Show order cost preview as player types ---
 document.getElementById("order-qty").addEventListener("input", function () {
   const qty = parseInt(this.value) || 0;
-  const cost = qty > 0 ? `(Cost: $${(qty * 1 + 2).toFixed(2)})` : "";
+  const cost = qty > 0 ? `(Cost: $${(qty * UNIT_COST + ORDER_FEE).toFixed(2)})` : "";
   document.getElementById("order-cost-preview").textContent = cost;
 });
 
@@ -160,7 +193,7 @@ function endTurn() {
 
   // 3. Place new order
   if (orderQty > 0) {
-    const orderCost = orderQty * 1 + 2;
+    const orderCost = orderQty * UNIT_COST + ORDER_FEE;
     if (orderCost > cash) {
       alert(`Not enough cash! This order costs $${orderCost.toFixed(2)} but you only have $${cash.toFixed(2)}.`);
       return;
