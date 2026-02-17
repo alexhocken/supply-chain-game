@@ -7,6 +7,9 @@ let pipeline = [0, 0];
 // --- Cost Constants ---
 const UNIT_COST = 2;
 const ORDER_FEE = 10;
+// --- Warehouse / external storage ---
+const WAREHOUSE_CAPACITY = 100;
+const EXTERNAL_STORAGE_COST = 5; // per unit per turn
 
 // --- Chart History ---
 let history = {
@@ -215,10 +218,18 @@ function endTurn() {
   logMessage(`🏷️ Price: $${price} → Demand: ${demand} → Sold: ${unitsSold} → Revenue: $${revenue.toFixed(2)}`);
   if (unmetDemand > 0) logMessage(`⚠️ Lost ${unmetDemand} units of demand (not enough inventory!)`);
 
-  // 5. Update charts AFTER this turn's inventory is settled
+  // 5. External storage penalty (if inventory exceeds warehouse capacity)
+  const excess = Math.max(0, inventory - WAREHOUSE_CAPACITY);
+  if (excess > 0) {
+    const penalty = excess * EXTERNAL_STORAGE_COST;
+    cash -= penalty;
+    logMessage(`🏚️ External storage: ${excess} units × $${EXTERNAL_STORAGE_COST} = $${penalty.toFixed(2)}`);
+  }
+
+  // 6. Update charts AFTER this turn's inventory & cash are settled
   updateCharts(price, demand);
 
-  // 6. Bankruptcy check
+  // 7. Bankruptcy check
   if (cash <= 0 && inventory === 0) {
     updateDisplay();
     logMessage("💀 Out of cash and inventory. Game over!");
@@ -226,7 +237,7 @@ function endTurn() {
     return;
   }
 
-  // 7. Advance turn
+  // 8. Advance turn
   turn++;
   updateDisplay();
 }
