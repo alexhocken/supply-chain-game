@@ -5,59 +5,113 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <h1>📦 Supply Chain Game</h1>
 
-    <div id="stats">
-      <div class="stat-box">💰 Cash: $<span id="cash">100</span></div>
-      <div class="stat-box">📦 Inventory: <span id="inventory">100</span> units</div>
-      <div class="stat-box">🔄 Turn: <span id="turn">1</span></div>
-    </div>
-
-  <div id="cost-info">
-   📦 Unit cost: $2 &nbsp;|&nbsp; 🧾 Order fee: $10 &nbsp;|&nbsp; 🏚️ Warehouse capacity: 100 units &nbsp;|&nbsp; 🏬 External storage: $5/unit &nbsp;|&nbsp; ❌ Missed-order penalty: $2/unit
-  </div>
-	<div id="incoming-box">
- 	 🚚 Incoming shipment: <span id="incoming">None</span>
- 	 &nbsp;|&nbsp; ⏱️ Lead time: 2 turns
-	</div>
-
-    <!-- Main layout: controls + charts side by side -->
-    <div id="main-layout">
-
-      <div id="left-panel">
-        <div id="controls">
-          <label>Set your price per unit: $<input type="number" id="price" value="3" min="1" max="20"></label>
-          <br><br>
-          <label>Order how many units? <input type="number" id="order-qty" value="0" min="0"></label>
-          <span id="order-cost-preview"></span>
-          <br><br>
-          <button onclick="endTurn()">⏩ End Turn</button>
-        </div>
-
-        <div id="log-box">
-          <h3>Turn Log</h3>
-          <div id="log"></div>
+    <!-- DIFFICULTY SCREEN -->
+    <div id="difficulty-screen">
+      <div id="difficulty-card">
+        <h1>📦 Supply Chain Game</h1>
+        <p class="diff-subtitle">Reach your cash goal before time runs out.<br>Choose your difficulty to begin.</p>
+        <div id="difficulty-options">
+          <div class="diff-btn" onclick="startGame('easy')">
+            <span class="diff-label">Easy</span>
+            <span class="diff-desc">Goal: $500 · 20 turns · Low volatility · Mild events</span>
+          </div>
+          <div class="diff-btn" onclick="startGame('medium')">
+            <span class="diff-label">Medium</span>
+            <span class="diff-desc">Goal: $1000 · 20 turns · Moderate volatility · Moderate events</span>
+          </div>
+          <div class="diff-btn" onclick="startGame('hard')">
+            <span class="diff-label hard-label">Hard</span>
+            <span class="diff-desc">Goal: $2000 · 20 turns · High volatility · Brutal events</span>
+          </div>
         </div>
       </div>
-
-      <div id="right-panel">
-        <div class="chart-box">
-          <h3>📦 Inventory Over Time</h3>
-          <canvas id="inventoryChart"></canvas>
-        </div>
-	<div class="chart-box">
- 	 <h3>🏷️ Price & Demand Over Time</h3>
-  	<canvas id="priceDemandChart"></canvas>
-	</div>
-	<div class="chart-box">
-  	<h3>💰 Cash Over Time</h3>
-  	<canvas id="cashChart"></canvas>
-	</div>
-      </div>
-
     </div>
 
-    <!-- Chart.js library -->
+    <!-- MAIN GAME (hidden until difficulty chosen) -->
+    <div id="game-screen" style="display:none">
+
+      <h1>📦 Supply Chain Game</h1>
+
+      <div id="stats">
+        <div class="stat-box">💰 Cash: $<span id="cash">100</span></div>
+        <div class="stat-box">📦 Inventory: <span id="inventory">100</span> units</div>
+        <div class="stat-box">🔄 Turn: <span id="turn">1</span> / <span id="max-turns">20</span></div>
+        <div class="stat-box">🎯 Goal: $<span id="goal-display">1000</span></div>
+      </div>
+
+      <div id="cost-info">
+        📦 Unit cost: $2 &nbsp;|&nbsp; 🧾 Order fee: $10 &nbsp;|&nbsp; 🏚️ Warehouse: 100 units &nbsp;|&nbsp; 🏬 External storage: $5/unit &nbsp;|&nbsp; ❌ Missed-order penalty: $2/unit
+      </div>
+
+      <div id="incoming-box">
+        🚚 Incoming shipment: <span id="incoming">None</span>
+        &nbsp;|&nbsp; ⏱️ Lead time: 2 turns
+      </div>
+
+      <div id="main-layout">
+
+        <div id="left-panel">
+          <div id="controls">
+            <label>Set your price per unit: $<input type="number" id="price" value="3" min="1" max="20"></label>
+            <br><br>
+            <label>Order how many units? <input type="number" id="order-qty" value="0" min="0"></label>
+            <span id="order-cost-preview"></span>
+            <br><br>
+
+            <!-- Expedited shipping toggle -->
+            <label id="expedited-label">
+              <input type="checkbox" id="expedited"> ⚡ Expedited shipping (+$20, arrives next turn)
+            </label>
+            <br><br>
+
+            <button onclick="endTurn()">⏩ End Turn</button>
+          </div>
+
+          <div id="log-box">
+            <h3>Turn Log</h3>
+            <div id="log"></div>
+          </div>
+        </div>
+
+        <div id="right-panel">
+          <div class="chart-box">
+            <h3>📦 Inventory Over Time</h3>
+            <canvas id="inventoryChart"></canvas>
+          </div>
+          <div class="chart-box">
+            <h3>🏷️ Price & Demand Over Time</h3>
+            <canvas id="priceDemandChart"></canvas>
+          </div>
+          <div class="chart-box">
+            <h3>💰 Cash Over Time</h3>
+            <canvas id="cashChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- END GAME SUMMARY MODAL -->
+    <div id="summary-overlay" style="display:none">
+      <div id="summary-modal">
+        <h2 id="summary-title">Game Over</h2>
+        <div id="summary-stats">
+          <div class="sum-stat"><span class="sum-label">Final Cash</span><span class="sum-val" id="sum-cash"></span></div>
+          <div class="sum-stat"><span class="sum-label">Total Profit</span><span class="sum-val" id="sum-profit"></span></div>
+          <div class="sum-stat"><span class="sum-label">Best Turn</span><span class="sum-val" id="sum-best"></span></div>
+          <div class="sum-stat"><span class="sum-label">Worst Turn</span><span class="sum-val" id="sum-worst"></span></div>
+          <div class="sum-stat"><span class="sum-label">Stockouts</span><span class="sum-val" id="sum-stockouts"></span></div>
+          <div class="sum-stat"><span class="sum-label">Avg Price Charged</span><span class="sum-val" id="sum-avg-price"></span></div>
+        </div>
+        <div class="chart-box" style="margin-top:20px">
+          <h3>💰 Cash Over Full Game</h3>
+          <canvas id="summaryChart"></canvas>
+        </div>
+        <button onclick="restartGame()" style="margin-top:20px">🔄 Play Again</button>
+      </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="game.js"></script>
   </body>
