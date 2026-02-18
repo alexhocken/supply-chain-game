@@ -10,47 +10,76 @@
     <div id="difficulty-screen">
       <div id="difficulty-card">
         <h1>📦 Supply Chain Game</h1>
-        <p class="diff-subtitle">Reach your cash goal before time runs out.<br>Choose your difficulty to begin.</p>
+        <p class="diff-subtitle">Build your supply chain empire across 5 levels.<br>Choose your difficulty to begin.</p>
         <div id="difficulty-options">
           <div class="diff-btn" onclick="startGame('easy')">
             <span class="diff-label">Easy</span>
-            <span class="diff-desc">Goal: $500 · 20 turns · Low volatility · Mild events</span>
+            <span class="diff-desc">Low volatility · Mild events · Good for learning</span>
           </div>
           <div class="diff-btn" onclick="startGame('medium')">
             <span class="diff-label">Medium</span>
-            <span class="diff-desc">Goal: $1000 · 20 turns · Moderate volatility · Moderate events</span>
+            <span class="diff-desc">Moderate volatility · Mixed events · Balanced challenge</span>
           </div>
           <div class="diff-btn" onclick="startGame('hard')">
             <span class="diff-label hard-label">Hard</span>
-            <span class="diff-desc">Goal: $2000 · 20 turns · High volatility · Brutal events</span>
+            <span class="diff-desc">High volatility · Brutal events · For veterans only</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- MAIN GAME (hidden until difficulty chosen) -->
+    <!-- UPGRADE SHOP (between levels) -->
+    <div id="upgrade-shop" style="display:none">
+      <div id="shop-modal">
+        <h2>🛒 Upgrade Shop</h2>
+        <div id="shop-level-info"></div>
+        <div id="shop-new-unlocks"></div>
+        <div id="shop-items"></div>
+        <div style="margin-top:24px;display:flex;gap:12px;justify-content:center">
+          <button onclick="beginNextLevel()">▶ Start Next Level</button>
+          <button onclick="closeShop()" style="background:rgba(255,255,255,0.08);">✕ Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN GAME -->
     <div id="game-screen" style="display:none">
 
       <h1>📦 Supply Chain Game</h1>
+
+      <!-- Pixel art scene -->
+      <div id="pixel-scene">
+        <canvas id="scene-canvas" width="800" height="160"></canvas>
+      </div>
 
       <div id="stats">
         <div class="stat-box">💰 Cash: $<span id="cash">100</span></div>
         <div class="stat-box">📦 Inventory: <span id="inventory">100</span> units</div>
         <div class="stat-box">🔄 Turn: <span id="turn">1</span> / <span id="max-turns">20</span></div>
-        <div class="stat-box">🎯 Goal: $<span id="goal-display">1000</span></div>
+        <div class="stat-box">🎯 Goal: $<span id="goal-display">500</span></div>
+        <div class="stat-box">🏆 Level: <span id="level-display">1</span> <small id="level-name-display" style="display:block;font-size:11px;color:#9aa3b2"></small></div>
       </div>
 
       <div id="cost-info">
-        📦 Unit cost: $2 &nbsp;|&nbsp; 🧾 Order fee: $10 &nbsp;|&nbsp; 🏚️ Warehouse: 100 units &nbsp;|&nbsp; 🏬 External storage: $5/unit &nbsp;|&nbsp; ❌ Missed-order penalty: $2/unit
+        📦 Unit cost: $<span id="unit-cost-display">2.00</span> &nbsp;|&nbsp;
+        🧾 Order fee: $10 &nbsp;|&nbsp;
+        🏚️ Warehouse: <span id="warehouse-cap-display">100</span> units &nbsp;|&nbsp;
+        🏬 Ext. storage: $5/unit &nbsp;|&nbsp;
+        ❌ Missed penalty: $2/unit
       </div>
 
       <div id="incoming-box">
-        🚚 Incoming shipment: <span id="incoming">None</span>
-        &nbsp;|&nbsp; ⏱️ Lead time: 2 turns
+        🚚 Incoming: <span id="incoming">None</span>
+        &nbsp;|&nbsp; ⏱️ Lead time: <span id="lead-time-display">2 turns</span>
       </div>
 
-      <div id="main-layout">
+      <div id="forecast-box" style="display:none">
+        🔮 Demand forecast (next turn): <strong id="forecast-val"></strong>
+      </div>
 
+      <div id="marketing-status" style="display:none"></div>
+
+      <div id="main-layout">
         <div id="left-panel">
           <div id="controls">
             <label>Set your price per unit: $<input type="number" id="price" value="3" min="1" max="20"></label>
@@ -58,14 +87,13 @@
             <label>Order how many units? <input type="number" id="order-qty" value="0" min="0"></label>
             <span id="order-cost-preview"></span>
             <br><br>
-
-            <!-- Expedited shipping toggle -->
             <label id="expedited-label">
               <input type="checkbox" id="expedited"> ⚡ Expedited shipping (+$20, arrives next turn)
             </label>
             <br><br>
-
             <button onclick="endTurn()">⏩ End Turn</button>
+            &nbsp;
+            <button id="shop-btn" onclick="openShop()" style="display:none;background:linear-gradient(90deg,#7c3aed,#6d28d9)">🛒 Upgrades</button>
           </div>
 
           <div id="log-box">
@@ -75,24 +103,14 @@
         </div>
 
         <div id="right-panel">
-          <div class="chart-box">
-            <h3>📦 Inventory Over Time</h3>
-            <canvas id="inventoryChart"></canvas>
-          </div>
-          <div class="chart-box">
-            <h3>🏷️ Price & Demand Over Time</h3>
-            <canvas id="priceDemandChart"></canvas>
-          </div>
-          <div class="chart-box">
-            <h3>💰 Cash Over Time</h3>
-            <canvas id="cashChart"></canvas>
-          </div>
+          <div class="chart-box"><h3>📦 Inventory Over Time</h3><canvas id="inventoryChart"></canvas></div>
+          <div class="chart-box"><h3>🏷️ Price & Demand Over Time</h3><canvas id="priceDemandChart"></canvas></div>
+          <div class="chart-box"><h3>💰 Cash Over Time</h3><canvas id="cashChart"></canvas></div>
         </div>
-
       </div>
     </div>
 
-    <!-- END GAME SUMMARY MODAL -->
+    <!-- SUMMARY MODAL -->
     <div id="summary-overlay" style="display:none">
       <div id="summary-modal">
         <h2 id="summary-title">Game Over</h2>
@@ -102,13 +120,29 @@
           <div class="sum-stat"><span class="sum-label">Best Turn</span><span class="sum-val" id="sum-best"></span></div>
           <div class="sum-stat"><span class="sum-label">Worst Turn</span><span class="sum-val" id="sum-worst"></span></div>
           <div class="sum-stat"><span class="sum-label">Stockouts</span><span class="sum-val" id="sum-stockouts"></span></div>
-          <div class="sum-stat"><span class="sum-label">Avg Price Charged</span><span class="sum-val" id="sum-avg-price"></span></div>
+          <div class="sum-stat"><span class="sum-label">Avg Price</span><span class="sum-val" id="sum-avg-price"></span></div>
         </div>
+
         <div class="chart-box" style="margin-top:20px">
           <h3>💰 Cash Over Full Game</h3>
           <canvas id="summaryChart"></canvas>
         </div>
-        <button onclick="restartGame()" style="margin-top:20px">🔄 Play Again</button>
+
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button id="next-level-btn" onclick="advanceLevel()" style="display:none;background:linear-gradient(90deg,#4ecdc4,#2aa79b)">▶ Next Level</button>
+          <button onclick="restartGame()">🔄 Play Again</button>
+        </div>
+
+        <!-- Leaderboard -->
+        <div id="leaderboard-submit" style="margin-top:28px">
+          <h3 style="color:#f7b731;margin-bottom:12px">🏅 Leaderboard</h3>
+          <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px">
+            <input id="lb-name-input" type="text" placeholder="Enter your name..." maxlength="20"
+              style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#eee;font-size:14px;width:200px">
+            <button id="lb-submit-btn" onclick="submitScore()" style="background:linear-gradient(90deg,#f7b731,#d97706)">📤 Submit Score</button>
+          </div>
+          <div id="leaderboard-list"></div>
+        </div>
       </div>
     </div>
 
