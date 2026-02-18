@@ -194,39 +194,11 @@ function getBulkUnitCost(qty) {
 // ============================================================
 const JSONBIN_KEY = '$2a$10$O2eobAdq7kf6upqFVUvuWOwetzxmDrL1U8svCeM35BqGhYa.8DK76';
 const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
-let JSONBIN_BIN_ID = null;
-
-async function getOrCreateBin() {
-  if (JSONBIN_BIN_ID) return JSONBIN_BIN_ID;
-  // Try to find existing bin by name
-  try {
-    const res = await fetch(`${JSONBIN_BASE}/b`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY, 'X-Bin-Name': 'supply-chain-leaderboard', 'X-Bin-Private': 'false' },
-      body: JSON.stringify({ scores: [] })
-    });
-    const data = await res.json();
-    if (data.metadata && data.metadata.id) {
-      JSONBIN_BIN_ID = data.metadata.id;
-      localStorage.setItem('scg_bin_id', JSONBIN_BIN_ID);
-      return JSONBIN_BIN_ID;
-    }
-  } catch(e) { console.error('Bin create error', e); }
-  return null;
-}
-
-async function ensureBinId() {
-  // Cache bin ID in localStorage so we don't create a new bin every time
-  const cached = localStorage.getItem('scg_bin_id');
-  if (cached) { JSONBIN_BIN_ID = cached; return JSONBIN_BIN_ID; }
-  return await getOrCreateBin();
-}
+const JSONBIN_BIN_ID = '6995df2343b1c97be988e7a0';
 
 async function loadLeaderboard() {
   try {
-    const binId = await ensureBinId();
-    if (!binId) return [];
-    const res = await fetch(`${JSONBIN_BASE}/b/${binId}/latest`, {
+    const res = await fetch(`${JSONBIN_BASE}/b/${JSONBIN_BIN_ID}/latest`, {
       headers: { 'X-Master-Key': JSONBIN_KEY }
     });
     const data = await res.json();
@@ -236,16 +208,13 @@ async function loadLeaderboard() {
 
 async function saveScore(name, score, level) {
   try {
-    const binId = await ensureBinId();
-    if (!binId) return;
     const existing = await loadLeaderboard();
     existing.push({ name, score, level, date: new Date().toLocaleDateString() });
     existing.sort((a, b) => b.score - a.score);
-    const top10 = existing.slice(0, 10);
-    await fetch(`${JSONBIN_BASE}/b/${binId}`, {
+    await fetch(`${JSONBIN_BASE}/b/${JSONBIN_BIN_ID}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
-      body: JSON.stringify({ scores: top10 })
+      body: JSON.stringify({ scores: existing.slice(0, 10) })
     });
   } catch(e) { console.error('Save score failed', e); }
 }
@@ -330,7 +299,20 @@ function restartGame() {
 // UPGRADE SHOP
 // ============================================================
 function openShop() { renderShop(); document.getElementById('upgrade-shop').style.display = 'flex'; }
-function closeShop() { document.getElementById('upgrade-shop').style.display = 'none'; }
+function closeShop() {
+  const betweenLevels = document.getElementById('upgrade-shop').dataset.betweenLevels === 'true';
+  document.getElementById('upgrade-shop').style.display = 'none';
+  document.getElementById('upgrade-shop').dataset.betweenLevels = 'false';
+  if (betweenLevels) {
+    // Between levels — go back to summary so they can still hit Next Level
+    document.getElementById('summary-overlay').style.display = 'flex';
+  } else if (gameActive) {
+    // Mid-game shop opened via the Upgrades button
+    document.getElementById('game-screen').style.display = 'block';
+  } else {
+    document.getElementById('summary-overlay').style.display = 'flex';
+  }
+}
 
 function renderShop() {
   const container = document.getElementById('shop-items');
@@ -674,9 +656,17 @@ function showSummary(won) {
     options:{animation:false,scales:{x:{ticks:{color:'#aaa'},grid:{color:'#333'}},y:{ticks:{color:'#aaa'},grid:{color:'#333'},beginAtZero:true}},plugins:{legend:{labels:{color:'#eee'}}}}
   });
 
-  document.getElementById('lb-submit-btn').disabled = false;
-  document.getElementById('lb-submit-btn').textContent = '📤 Submit Score';
-  renderLeaderboard();
+  // Only show leaderboard on true game over (loss, or won the final level)
+  const isGameOver = !won || currentLevel >= 5;
+  const lbSection = document.getElementById('leaderboard-submit');
+  if (isGameOver) {
+    lbSection.style.display = 'block';
+    document.getElementById('lb-submit-btn').disabled = false;
+    document.getElementById('lb-submit-btn').textContent = '📤 Submit Score';
+    renderLeaderboard();
+  } else {
+    lbSection.style.display = 'none';
+  }
   document.getElementById('summary-overlay').style.display = 'flex';
 }
 
@@ -686,6 +676,7 @@ function advanceLevel() {
   document.getElementById('game-screen').style.display = 'none';
   renderShop();
   document.getElementById('upgrade-shop').style.display = 'flex';
+  document.getElementById('upgrade-shop').dataset.betweenLevels = 'true';
   const lvlDef = LEVELS[Math.min(currentLevel-1, LEVELS.length-1)];
   document.getElementById('shop-level-info').textContent = `Heading into Level ${currentLevel}. You have $${cash.toFixed(2)} to spend on upgrades!`;
   const newUnlocks = currentLevel <= 5 ? (lvlDef.unlocksUpgrades||[]) : [];
