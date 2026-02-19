@@ -267,7 +267,7 @@ function startLevel() {
 
   document.getElementById('difficulty-screen').style.display = 'none';
   document.getElementById('upgrade-shop').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'block';
+  document.getElementById('summary-overlay').style.display = 'none';
 
   document.getElementById('goal-display').textContent = goalCash.toLocaleString();
   document.getElementById('max-turns').textContent = MAX_TURNS;
@@ -279,16 +279,19 @@ function startLevel() {
   charts = {};
   document.getElementById('log').innerHTML = '';
 
-  initCharts(); initScene(); updateDisplay(); updateUpgradeBtn();
+  initCharts(); updateDisplay(); updateUpgradeBtn();
 
   document.querySelector('button[onclick="endTurn()"]').disabled = false;
   logMessage(`🚀 Level ${currentLevel}: Goal $${goalCash.toLocaleString()} in ${MAX_TURNS} turns.`);
   if (currentLevel > 1) logMessage(`💰 Carrying $${cash.toFixed(2)} and ${inventory} units into this level!`);
+
+  // Enter the warehouse world — this IS the game now
+  enterWarehouseWorld();
 }
 
 function restartGame() {
+  exitWarehouseWorld();
   document.getElementById('summary-overlay').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'none';
   document.getElementById('upgrade-shop').style.display = 'none';
   document.getElementById('difficulty-screen').style.display = 'flex';
   Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
@@ -298,19 +301,25 @@ function restartGame() {
 // ============================================================
 // UPGRADE SHOP
 // ============================================================
-function openShop() { renderShop(); document.getElementById('upgrade-shop').style.display = 'flex'; }
+function openShop() {
+  renderShop();
+  document.getElementById('upgrade-shop').dataset.betweenLevels = 'false';
+  document.getElementById('shop-level-info').textContent = `You have $${cash.toFixed(2)} to spend. Upgrades take effect immediately!`;
+  document.getElementById('shop-new-unlocks').textContent = '';
+  document.getElementById('shop-next-level-btn').style.display = 'none';
+  document.getElementById('upgrade-shop').style.display = 'flex';
+}
 function closeShop() {
   const betweenLevels = document.getElementById('upgrade-shop').dataset.betweenLevels === 'true';
   document.getElementById('upgrade-shop').style.display = 'none';
   document.getElementById('upgrade-shop').dataset.betweenLevels = 'false';
   if (betweenLevels) {
-    // Between levels — go back to summary so they can still hit Next Level
     document.getElementById('summary-overlay').style.display = 'flex';
-  } else if (gameActive) {
-    // Mid-game shop opened via the Upgrades button
-    document.getElementById('game-screen').style.display = 'block';
   } else {
-    document.getElementById('summary-overlay').style.display = 'flex';
+    // Mid-game shop — just close it, warehouse world is already running behind
+    document.getElementById('upgrade-shop').style.display = 'none';
+    // Re-enter pointer lock so player can walk again
+    setTimeout(requestWarehousePointerLock, 100);
   }
 }
 
@@ -588,8 +597,9 @@ function endTurn() {
     logMessage(`❌ Missed orders penalty: ${unmetDemand}×$${MISSED_ORDER_PENALTY}=$${p.toFixed(2)}`);
   }
 
-  // 7. Animate
-  triggerSceneAnimation(arriving > 0 && !es.cancelShipment, unitsSold, expedited);
+  // 7. Refresh warehouse shelves + HUD to reflect new inventory
+  if (typeof rebuildWarehouseContents === 'function') rebuildWarehouseContents();
+  if (typeof updateWarehouseHUD === 'function') updateWarehouseHUD();
 
   // 8. Charts + display
   turnProfits.push(parseFloat(cash.toFixed(2)));
@@ -673,10 +683,10 @@ function showSummary(won) {
 function advanceLevel() {
   currentLevel++;
   document.getElementById('summary-overlay').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'none';
   renderShop();
-  document.getElementById('upgrade-shop').style.display = 'flex';
   document.getElementById('upgrade-shop').dataset.betweenLevels = 'true';
+  document.getElementById('shop-next-level-btn').style.display = 'inline-block';
+  document.getElementById('upgrade-shop').style.display = 'flex';
   const lvlDef = LEVELS[Math.min(currentLevel-1, LEVELS.length-1)];
   document.getElementById('shop-level-info').textContent = `Heading into Level ${currentLevel}. You have $${cash.toFixed(2)} to spend on upgrades!`;
   const newUnlocks = currentLevel <= 5 ? (lvlDef.unlocksUpgrades||[]) : [];
@@ -686,7 +696,7 @@ function advanceLevel() {
 
 function beginNextLevel() {
   document.getElementById('upgrade-shop').style.display = 'none';
-  startLevel();
+  startLevel(); // startLevel now calls enterWarehouseWorld()
 }
 
 async function submitScore() {
