@@ -28,7 +28,125 @@
       </div>
     </div>
 
-    <!-- UPGRADE SHOP (between levels) -->
+    <!-- 3D WAREHOUSE — PRIMARY GAME WORLD -->
+    <div id="warehouse-world" style="display:none;position:fixed;inset:0;background:#0a0f1a;">
+
+      <canvas id="warehouse-canvas" style="width:100%;height:100%;display:block;cursor:crosshair;"></canvas>
+
+      <!-- Top HUD bar -->
+      <div id="wh-hud">
+        <div class="wh-hud-left">
+          <span id="wh-level-badge">LEVEL 1</span>
+          <span id="wh-level-name">Getting Started</span>
+        </div>
+        <div class="wh-hud-center">
+          <span id="wh-cash-hud">💰 $100</span>
+          <span class="wh-hud-sep">·</span>
+          <span id="wh-inv-hud">📦 100 units</span>
+          <span class="wh-hud-sep">·</span>
+          <span id="wh-turn-hud">🔄 Turn 1/20</span>
+          <span class="wh-hud-sep">·</span>
+          <span id="wh-goal-hud">🎯 Goal $500</span>
+        </div>
+        <div class="wh-hud-right">
+          WASD · Mouse · <kbd>E</kbd> Terminal
+        </div>
+      </div>
+
+      <!-- Crosshair -->
+      <div id="wh-crosshair">
+        <div class="ch-v"></div>
+        <div class="ch-h"></div>
+      </div>
+
+      <!-- Press E prompt -->
+      <div id="wh-interact-prompt" style="display:none;">
+        <kbd>E</kbd> &nbsp;Open Terminal
+      </div>
+
+      <!-- Click to start overlay -->
+      <div id="wh-click-msg" onclick="requestWarehousePointerLock()" style="cursor:pointer;">
+        <div id="wh-click-inner">
+          <div style="font-size:36px;margin-bottom:16px;">🏭</div>
+          <div style="font-size:20px;font-weight:700;color:#4ecdc4;margin-bottom:10px;">Welcome to your Warehouse</div>
+          <div style="font-size:14px;color:#9aa3b2;margin-bottom:24px;line-height:1.7">
+            Walk to the terminal in the center and press
+            <kbd style="background:rgba(255,255,255,0.12);padding:2px 10px;border-radius:5px;color:#f7b731;font-size:15px;">E</kbd>
+            to manage your business
+          </div>
+          <div style="font-size:13px;color:#555;cursor:pointer;" onclick="requestWarehousePointerLock()">▶ Click to start</div>
+        </div>
+      </div>
+
+      <!-- TERMINAL PANEL — slides in from right -->
+      <div id="terminal-panel" class="terminal-closed">
+        <div id="terminal-header">
+          <span>💻 MANAGEMENT TERMINAL</span>
+          <button id="terminal-close-btn" onclick="closeTerminal()">✕ Back to Warehouse</button>
+        </div>
+        <div id="terminal-body">
+
+          <div id="stats">
+            <div class="stat-box">💰 Cash: $<span id="cash">100</span></div>
+            <div class="stat-box">📦 Inventory: <span id="inventory">100</span> units</div>
+            <div class="stat-box">🔄 Turn: <span id="turn">1</span> / <span id="max-turns">20</span></div>
+            <div class="stat-box">🎯 Goal: $<span id="goal-display">500</span></div>
+            <div class="stat-box">🏆 Level: <span id="level-display">1</span><small id="level-name-display" style="display:block;font-size:11px;color:#9aa3b2"></small></div>
+          </div>
+
+          <div id="cost-info">
+            📦 Unit cost: $<span id="unit-cost-display">2.00</span> &nbsp;|&nbsp;
+            🧾 Order fee: $10 &nbsp;|&nbsp;
+            🏚️ Warehouse: <span id="warehouse-cap-display">100</span> units &nbsp;|&nbsp;
+            🏬 Ext. storage: $5/unit &nbsp;|&nbsp;
+            ❌ Missed penalty: $2/unit
+          </div>
+
+          <div id="incoming-box">
+            🚚 Incoming: <span id="incoming">None</span>
+            &nbsp;|&nbsp; ⏱️ Lead time: <span id="lead-time-display">2 turns</span>
+          </div>
+
+          <div id="forecast-box" style="display:none">
+            🔮 Demand forecast (next turn): <strong id="forecast-val"></strong>
+          </div>
+
+          <div id="marketing-status" style="display:none"></div>
+
+          <div id="terminal-main-layout">
+            <div id="left-panel">
+              <div id="controls">
+                <label>Set your price per unit: $<input type="number" id="price" value="3" min="1" max="20"></label>
+                <br><br>
+                <label>Order how many units? <input type="number" id="order-qty" value="0" min="0"></label>
+                <span id="order-cost-preview"></span>
+                <br><br>
+                <label id="expedited-label">
+                  <input type="checkbox" id="expedited"> ⚡ Expedited shipping (+$20, arrives next turn)
+                </label>
+                <br><br>
+                <button onclick="endTurn()">⏩ End Turn</button>
+                &nbsp;
+                <button id="shop-btn" onclick="openShop()" style="display:none;background:linear-gradient(90deg,#7c3aed,#6d28d9)">🛒 Upgrades</button>
+              </div>
+              <div id="log-box">
+                <h3>Turn Log</h3>
+                <div id="log"></div>
+              </div>
+            </div>
+            <div id="right-panel">
+              <div class="chart-box"><h3>📦 Inventory Over Time</h3><canvas id="inventoryChart"></canvas></div>
+              <div class="chart-box"><h3>🏷️ Price & Demand Over Time</h3><canvas id="priceDemandChart"></canvas></div>
+              <div class="chart-box"><h3>💰 Cash Over Time</h3><canvas id="cashChart"></canvas></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /warehouse-world -->
+
+    <!-- UPGRADE SHOP OVERLAY -->
     <div id="upgrade-shop" style="display:none">
       <div id="shop-modal">
         <h2>🛒 Upgrade Shop</h2>
@@ -36,76 +154,8 @@
         <div id="shop-new-unlocks"></div>
         <div id="shop-items"></div>
         <div style="margin-top:24px;display:flex;gap:12px;justify-content:center">
-          <button onclick="beginNextLevel()">▶ Start Next Level</button>
+          <button id="shop-next-level-btn" onclick="beginNextLevel()">▶ Start Next Level</button>
           <button onclick="closeShop()" style="background:rgba(255,255,255,0.08);">✕ Close</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MAIN GAME -->
-    <div id="game-screen" style="display:none">
-
-      <h1>📦 Supply Chain Game</h1>
-
-      <!-- Pixel art scene -->
-      <div id="pixel-scene">
-        <canvas id="scene-canvas" width="800" height="160"></canvas>
-      </div>
-
-      <div id="stats">
-        <div class="stat-box">💰 Cash: $<span id="cash">100</span></div>
-        <div class="stat-box">📦 Inventory: <span id="inventory">100</span> units</div>
-        <div class="stat-box">🔄 Turn: <span id="turn">1</span> / <span id="max-turns">20</span></div>
-        <div class="stat-box">🎯 Goal: $<span id="goal-display">500</span></div>
-        <div class="stat-box">🏆 Level: <span id="level-display">1</span> <small id="level-name-display" style="display:block;font-size:11px;color:#9aa3b2"></small></div>
-      </div>
-
-      <div id="cost-info">
-        📦 Unit cost: $<span id="unit-cost-display">2.00</span> &nbsp;|&nbsp;
-        🧾 Order fee: $10 &nbsp;|&nbsp;
-        🏚️ Warehouse: <span id="warehouse-cap-display">100</span> units &nbsp;|&nbsp;
-        🏬 Ext. storage: $5/unit &nbsp;|&nbsp;
-        ❌ Missed penalty: $2/unit
-      </div>
-
-      <div id="incoming-box">
-        🚚 Incoming: <span id="incoming">None</span>
-        &nbsp;|&nbsp; ⏱️ Lead time: <span id="lead-time-display">2 turns</span>
-      </div>
-
-      <div id="forecast-box" style="display:none">
-        🔮 Demand forecast (next turn): <strong id="forecast-val"></strong>
-      </div>
-
-      <div id="marketing-status" style="display:none"></div>
-
-      <div id="main-layout">
-        <div id="left-panel">
-          <div id="controls">
-            <label>Set your price per unit: $<input type="number" id="price" value="3" min="1" max="20"></label>
-            <br><br>
-            <label>Order how many units? <input type="number" id="order-qty" value="0" min="0"></label>
-            <span id="order-cost-preview"></span>
-            <br><br>
-            <label id="expedited-label">
-              <input type="checkbox" id="expedited"> ⚡ Expedited shipping (+$20, arrives next turn)
-            </label>
-            <br><br>
-            <button onclick="endTurn()">⏩ End Turn</button>
-            &nbsp;
-            <button id="shop-btn" onclick="openShop()" style="display:none;background:linear-gradient(90deg,#7c3aed,#6d28d9)">🛒 Upgrades</button>
-          </div>
-
-          <div id="log-box">
-            <h3>Turn Log</h3>
-            <div id="log"></div>
-          </div>
-        </div>
-
-        <div id="right-panel">
-          <div class="chart-box"><h3>📦 Inventory Over Time</h3><canvas id="inventoryChart"></canvas></div>
-          <div class="chart-box"><h3>🏷️ Price & Demand Over Time</h3><canvas id="priceDemandChart"></canvas></div>
-          <div class="chart-box"><h3>💰 Cash Over Time</h3><canvas id="cashChart"></canvas></div>
         </div>
       </div>
     </div>
@@ -122,18 +172,14 @@
           <div class="sum-stat"><span class="sum-label">Stockouts</span><span class="sum-val" id="sum-stockouts"></span></div>
           <div class="sum-stat"><span class="sum-label">Avg Price</span><span class="sum-val" id="sum-avg-price"></span></div>
         </div>
-
         <div class="chart-box" style="margin-top:20px">
           <h3>💰 Cash Over Full Game</h3>
           <canvas id="summaryChart"></canvas>
         </div>
-
         <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <button id="next-level-btn" onclick="advanceLevel()" style="display:none;background:linear-gradient(90deg,#4ecdc4,#2aa79b)">▶ Next Level</button>
           <button onclick="restartGame()">🔄 Play Again</button>
         </div>
-
-        <!-- Leaderboard -->
         <div id="leaderboard-submit" style="margin-top:28px">
           <h3 style="color:#f7b731;margin-bottom:12px">🏅 Leaderboard</h3>
           <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px">
@@ -146,7 +192,9 @@
       </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="game.js"></script>
+    <script src="warehouse3d.js"></script>
   </body>
 </html>
