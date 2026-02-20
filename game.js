@@ -531,6 +531,7 @@ function endTurn() {
     } else {
       event.apply(es);
       logMessage(`🎲 EVENT: ${event.msg}`);
+      if (typeof window !== 'undefined') window.__supplyChainEvent = { type: event.type, at: performance.now() };
       alert(`🎲 Random Event!\n\n${event.msg}`);
     }
   }
