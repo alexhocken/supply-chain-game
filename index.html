@@ -59,9 +59,36 @@
         <div class="ch-h"></div>
       </div>
 
-      <!-- Press E prompt -->
+      <!-- Press E prompt (text updated by JS for terminal / incoming / goal) -->
       <div id="wh-interact-prompt" style="display:none;">
-        <kbd>E</kbd> &nbsp;Open Terminal
+        <kbd>E</kbd> &nbsp;<span id="wh-interact-label">Open Terminal</span>
+      </div>
+
+      <!-- Incoming board & goal sign info panels (E to open when near) -->
+      <div id="incoming-board-panel" class="wh-info-panel wh-info-closed">
+        <div class="wh-info-inner">
+          <h3>🚚 Incoming Shipments</h3>
+          <div id="incoming-board-content"></div>
+          <button type="button" class="wh-info-close" onclick="closeInfoPanels()">✕ Close</button>
+        </div>
+      </div>
+      <div id="goal-sign-panel" class="wh-info-panel wh-info-closed">
+        <div class="wh-info-inner">
+          <h3>🎯 Level Goal</h3>
+          <div id="goal-sign-content"></div>
+          <button type="button" class="wh-info-close" onclick="closeInfoPanels()">✕ Close</button>
+        </div>
+      </div>
+
+      <!-- Event flash overlay (good = green, bad = red) -->
+      <div id="event-flash" class="event-flash-hidden" aria-hidden="true"></div>
+
+      <!-- Movement pad for touch / non–pointer-lock -->
+      <div id="wh-movement-pad" class="wh-movement-pad">
+        <button type="button" id="wh-btn-w" class="wh-move-btn wh-move-up" aria-label="Move forward">▲</button>
+        <button type="button" id="wh-btn-s" class="wh-move-btn wh-move-down" aria-label="Move back">▼</button>
+        <button type="button" id="wh-btn-a" class="wh-move-btn wh-move-left" aria-label="Move left">◀</button>
+        <button type="button" id="wh-btn-d" class="wh-move-btn wh-move-right" aria-label="Move right">▶</button>
       </div>
 
       <!-- Click to start overlay -->
